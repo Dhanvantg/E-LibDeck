@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Login Page</title>
+    <title>Invalid Mail</title>
     <script src="https://accounts.google.com/gsi/client" async></script>
     <style>
         body {
@@ -54,36 +54,8 @@
 <body>
 
 <div class="container">
-    {% if request.session.user_data %}
-    <div>
-        <p>Hi {{ request.session.user_data.given_name }} 🙂</p>
-        <p>Your email is {{ request.session.user_data.email }}</p>
-        <img src="{{ request.session.user_data.picture }}" alt="User picture">
-        <p>Click here to <a href="/sign-out">Sign out</a></p>
-    </div>
-    {% else %}
-    <div>
-        <p>Hi there 🙂 </p>
-        <p>Click below to sign in with Google</p>
-        <div id="g_id_onload"
-            data-client_id="438882212858-ticsotglv34ch1b5tfpso0tlnvd71adc.apps.googleusercontent.com"
-            data-context="signin"
-            data-ux_mode="redirect"
-            data-login_uri="http://localhost:8000/auth-receiver"
-            data-auto_prompt="false">
-        </div>
-
-        <div class="g_id_signin"
-            data-type="standard"
-            data-shape="pill"
-            data-theme="outline"
-            data-text="signin_with"
-            data-size="large"
-            data-logo_alignment="left">
-        </div>
-        <p><a href="/admin">Admin Login</a></p>
-    </div>
-    {% endif %}
+    <p>Invalid Mail ID! Kindly login again</p>
+    <p>Click <a href="">here</a> to Sign In with BITS Mail</p>
 </div>
 
 </body>
