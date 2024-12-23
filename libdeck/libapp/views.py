@@ -1,12 +1,15 @@
 import os
 
 from django.http import HttpResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from google.oauth2 import id_token
 from google.auth.transport import requests
-from .models import Student
-from .forms import student_details
+from .models import Student, Book_Parent
+from .forms import student_details, BookForm
+from django.contrib.auth import authenticate, login
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 
 @csrf_exempt
 def sign_in(request):
@@ -74,3 +77,70 @@ def student_form(request):
 
     # Render the template with the form
     return render(request, 'student_details.html', {'form': form})
+
+
+
+def librarian_login(request):
+    if request.method == "POST":
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+
+        # Authenticate user
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)  # Log in the user
+            return redirect('librarian_dashboard')  # Redirect to the dashboard
+        else:
+            messages.error(request, "Invalid username or password")
+
+    return render(request, 'librarian_login.html')
+
+
+@login_required
+def librarian_dashboard(request):
+    books = Book_Parent.objects.all()  # Fetch all books
+    query = request.GET.get('q')  # Get the search query from the request
+    if query:
+        books = Book_Parent.objects.filter(title__icontains=query)  # Filter books by title
+    else:
+        books = Book_Parent.objects.all()
+    return render(request, 'librarian_dashboard.html', {
+        'username': request.user.username,
+        'psrn': request.user.psrn,
+        'books': books,
+        'query': query,
+    })
+    
+    
+def add_book(request):
+    if request.method == 'POST':
+        form = BookForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Book added successfully!")
+            return redirect('librarian_dashboard') 
+    else:
+        form = BookForm()
+    return render(request, 'add_book.html', {'form': form})
+
+
+def book_detail(request, pk):
+    book = get_object_or_404(Book_Parent, pk=pk)  # Get the book by primary key
+    if request.method == 'POST':
+        form = BookForm(request.POST, request.FILES, instance=book)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Book details updated successfully!")
+            return redirect('librarian_dashboard')  # Redirect to the dashboard or another page
+    else:
+        form = BookForm(instance=book)  # Pre-fill the form with the current book data
+    return render(request, 'book_detail.html', {'form': form, 'book': book})
+
+
+def delete_book(request, pk):
+    book = get_object_or_404(Book_Parent, pk=pk)
+    if request.method == "POST":
+        book.delete()
+        messages.success(request, "Book deleted successfully!")
+        return redirect('librarian_dashboard')
+    return render(request, 'delete_book_confirm.html', {'book': book})

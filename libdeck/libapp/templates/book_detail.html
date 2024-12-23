@@ -1,0 +1,18 @@
+{% extends 'lib_dash_base.html' %}
+{% block content %}
+<center>
+<div class="container">
+    <h2>Edit Book: {{ book.title }}</h2>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+        <a href="{% url 'librarian_dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+    </form>
+    <div class="mt-4">
+        <a href="{% url 'delete_book' book.pk %}" class="btn btn-danger">Delete Book</a>
+    </div>
+</div>
+</center>
+{% endblock %}
