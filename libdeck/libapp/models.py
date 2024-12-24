@@ -9,7 +9,7 @@ class Student(models.Model):
     room = models.IntegerField(default=0)
 
     def __str__(self):
-        return self.user.username
+        return self.name
     
 
 class Librarian(AbstractUser):

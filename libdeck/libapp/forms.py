@@ -1,7 +1,7 @@
 from django import forms
-from .models import Book_Parent
+from .models import Book_Parent, Student
 
-class student_details(forms.Form):
+class student_details(forms.ModelForm):
     choices = [
         ('SR', 'SR'),
         ('Gandhi', 'Gandhi'),
@@ -18,6 +18,10 @@ class student_details(forms.Form):
     ]
     hostel = forms.ChoiceField(choices=choices, label='Select Hostel')
     room = forms.IntegerField(label="Room Number")
+    
+    class Meta:
+        model = Student
+        fields = ['hostel', 'room']
 
 
 class BookForm(forms.ModelForm):

@@ -14,7 +14,11 @@ import openpyxl
 
 @csrf_exempt
 def sign_in(request):
-    return render(request, 'sign_in.html')
+    try:
+        if request.session['user_data']:
+            return redirect('student_dashboard')
+    except:
+        return render(request, 'sign_in.html')
 
 
 @csrf_exempt
@@ -40,11 +44,11 @@ def auth_receiver(request):
             if Student.objects.filter(id=bits_id).exists():
                 print('checking')
                 if Student.objects.get(id=bits_id).hostel == 'empty':
-                    return redirect('submit_form')
+                    return redirect('student_dashboard')
             else:
                 print('creating')
                 Student.objects.create(mail = user_data['email'], id = bits_id, name = user_data['name'])
-            return redirect('sign_in')
+            return redirect('student_dashboard')
 
         else:
             print('yes')
@@ -60,24 +64,32 @@ def sign_out(request):
     return redirect('sign_in')
 
 
-def student_form(request):
+def student_dashboard(request):
+    bits_id = request.session['user_data']['email'].split('@')[0]
+    student = Student.objects.get(id=bits_id)
+    books = Book_Parent.objects.all()  # Fetch all books
+    query = request.GET.get('q')  # Get the search query from the request
+    if query:
+        books = Book_Parent.objects.filter(title__icontains=query)
     if request.method == 'POST':
-        form = student_details(request.POST)  # Bind data from POST request to the form
+        form = student_details(request.POST, instance=student)  # Bind data from POST request to the form
         if form.is_valid():
             # Access cleaned data
             print('here')
             hostel = form.cleaned_data['hostel']
             room = form.cleaned_data['room']
-            bits_id = request.session['user_data']['email'].split('@')[0]
-            Student.objects.filter(id=bits_id).update(hostel=hostel, room=room)
-            
-            return redirect('sign_in')
+            student.hostel = hostel
+            student.room = room
+            student.save()
             
     else:
-        form = student_details()
+        print(bits_id, student)
+        form = student_details(instance=student)
 
     # Render the template with the form
-    return render(request, 'student_details.html', {'form': form})
+    return render(request, 'student_dashboard.html', {'form': form,
+        'books': books,
+        'query': query,})
 
 
 
@@ -103,8 +115,6 @@ def librarian_dashboard(request):
     query = request.GET.get('q')  # Get the search query from the request
     if query:
         books = Book_Parent.objects.filter(title__icontains=query)  # Filter books by title
-    else:
-        books = Book_Parent.objects.all()
     return render(request, 'librarian_dashboard.html', {
         'username': request.user.username,
         'psrn': request.user.psrn,

@@ -2,13 +2,65 @@
 {% load static %}
 
 {% block content %}
+<style>
+    .profile-icon-container {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        z-index: 10;
+    }
+
+    .profile-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 2px solid #ddd;
+    }
+
+    .profile-modal {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        display: none;
+        background: #fff;
+        padding: 20px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        border-radius: 10px;
+        z-index: 20;
+    }
+
+    .profile-modal-content {
+        text-align: center;
+    }
+
+    .blurred {
+        filter: blur(5px);
+        pointer-events: none;
+    }
+</style>
 <center>
-<h1> Library Dashboard</h1>
-<h3>Welcome, {{ username }}</h3>
-<h5>Your PSRN: {{ psrn }}</h5>
-<br>
+
+
+<div class="profile-icon-container">
+    <img src="{% static 'profile-icon.png' %}" alt="Profile Icon" class="profile-icon" id="profileIcon">
+</div>
+<div class="profile-modal" id="profileModal">
+    <div class="profile-modal-content">
+        <h3> Profile </h3>
+        <p>Hi, {{ username }} 🙂</p>
+        <p>Your PSRN: {{ psrn }}</p>
+        <a href="{% url 'sign_in' %}" class="btn btn-danger">Log Out</a>
+    </div>
+</div>
+
+
+<div class = "main-content">
+    <h1> Library Dashboard</h1>
+    <br>
 <div class="container">
-    <h2>Books Available:</h2>
+    <h2>Available Books</h2>
     <form method="get" class="mb-4">
         <div class="input-group">
             <input type="text" name="q" class="form-control" placeholder="Search books by title" value="{{ query|default:'' }}">
@@ -28,17 +80,46 @@
         </a>
     {% endfor %}
 </div>
-<br>
-<a href="{% url 'add_book' %}" class="btn btn-success">Add New Book</a>
-<a href="{% url 'upload_books' %}" class="btn btn-success">Upload Multiple Books</a>
-{% if messages %}
-    <ul>
-        {% for message in messages %}
-            <li>{{ message }}</li>
-        {% endfor %}
-    </ul>
-
+    <br>
+    <a href="{% url 'add_book' %}" class="btn btn-success">Add New Book</a>
+    <a href="{% url 'upload_books' %}" class="btn btn-success">Upload Multiple Books</a>
+    {% if messages %}
+        <ul>
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+</div>
 {% endif %}
 </center>
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const profileIcon = document.getElementById("profileIcon");
+        const profileModal = document.getElementById("profileModal");
+        const mainContent = document.querySelector(".main-content");
+    
+        profileIcon.addEventListener("click", function () {
+            if (profileModal.style.display === "block") {
+            // If modal is open, close it
+            profileModal.style.display = "none";
+            mainContent.classList.remove("blurred");
+        } else {
+            // If modal is closed, open it
+            profileModal.style.display = "block";
+            mainContent.classList.add("blurred");
+        }
+        });
+    
+        // Close modal when clicking outside it
+        window.addEventListener("click", function (event) {
+            if (event.target === profileModal) {
+                profileModal.style.display = "none";
+                mainContent.classList.remove("blurred");
+            }
+        });
+    });
+</script>
 
 {% endblock %}
