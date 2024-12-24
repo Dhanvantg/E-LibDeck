@@ -24,3 +24,7 @@ class BookForm(forms.ModelForm):
     class Meta:
         model = Book_Parent
         fields = ['title', 'author', 'publisher', 'isbn', 'publication_year', 'total_copies', 'cover_image']
+        
+        
+class BookUploadForm(forms.Form):
+    excel_file = forms.FileField(label="Upload Excel File")

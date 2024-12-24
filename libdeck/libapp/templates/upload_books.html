@@ -1,21 +1,23 @@
 {% extends 'lib_dash_base.html' %}
+{% load static %}
 {% block content %}
 <div class="container">
-    <h2>Add New Book</h2>
+    <h2 class="mb-4">Upload Books</h2>
+
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         {{ form.as_p }}
-        <button type="submit" class="btn btn-primary">Add Book</button>
+        <a href="{% static 'files/example_books.xlsx' %}" class="btn btn-success" download>Download Template</a>
+        <br><br>
+        <button type="submit" class="btn btn-primary">Upload</button>
         <a href="{% url 'librarian_dashboard' %}" class="btn btn-secondary">Cancel</a>
     </form>
-    {% if messages %}
+</div>
+{% if messages %}
     <ul>
         {% for message in messages %}
             <li>{{ message }}</li>
-            <li>{{ message }}</li>
         {% endfor %}
     </ul>
-    {% endif %}
-</div>
-
+{% endif %}
 {% endblock %}

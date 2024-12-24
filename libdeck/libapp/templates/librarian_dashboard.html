@@ -30,13 +30,15 @@
 </div>
 <br>
 <a href="{% url 'add_book' %}" class="btn btn-success">Add New Book</a>
+<a href="{% url 'upload_books' %}" class="btn btn-success">Upload Multiple Books</a>
 {% if messages %}
     <ul>
         {% for message in messages %}
             <li>{{ message }}</li>
         {% endfor %}
     </ul>
-</center>
+
 {% endif %}
+</center>
 
 {% endblock %}

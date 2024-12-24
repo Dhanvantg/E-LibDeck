@@ -14,6 +14,7 @@ urlpatterns = [
     path('add-book/', views.add_book, name='add_book'),
     path('book/<int:pk>/', views.book_detail, name='book_detail'),
     path('book/<int:pk>/delete/', views.delete_book, name='delete_book'),
+    path('upload-books/', views.upload_books, name='upload_books'),
 ]
 
 if settings.DEBUG:  # Serve media files during development

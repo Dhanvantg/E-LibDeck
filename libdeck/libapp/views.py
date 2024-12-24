@@ -6,10 +6,11 @@ from django.views.decorators.csrf import csrf_exempt
 from google.oauth2 import id_token
 from google.auth.transport import requests
 from .models import Student, Book_Parent
-from .forms import student_details, BookForm
+from .forms import student_details, BookForm, BookUploadForm
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+import openpyxl
 
 @csrf_exempt
 def sign_in(request):
@@ -144,3 +145,46 @@ def delete_book(request, pk):
         messages.success(request, "Book deleted successfully!")
         return redirect('librarian_dashboard')
     return render(request, 'delete_book_confirm.html', {'book': book})
+
+
+def upload_books(request):
+    if request.method == "POST":
+        form = BookUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            excel_file = request.FILES["excel_file"]
+
+            # Open the uploaded Excel file
+            try:
+                wb = openpyxl.load_workbook(excel_file)
+                sheet = wb.active
+
+                for row in sheet.iter_rows(min_row=2, values_only=True):  # Skip header row
+                    title, author, publisher, isbn, publication_year, total_copies = row
+
+                    if isbn and Book_Parent.objects.filter(isbn=isbn).exists():
+                        messages.error(request, f"Error: ISBN {isbn} already exists for another book.")
+                        continue
+                    
+                    # Ensure required fields are present
+                    if title and author and total_copies:
+                        book = Book_Parent(
+                            title=title,
+                            author=author,
+                            publisher=publisher,
+                            isbn=isbn,
+                            publication_year=publication_year,
+                            total_copies=total_copies,
+                            available_copies=total_copies,
+                        )
+                        book.save()
+
+                messages.success(request, "Books uploaded successfully!")
+                return redirect("librarian_dashboard")
+
+            except Exception as e:
+                messages.error(request, f"Error processing file: {str(e)}")
+
+    else:
+        form = BookUploadForm()
+
+    return render(request, "upload_books.html", {"form": form})
