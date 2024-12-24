@@ -5,12 +5,13 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from google.oauth2 import id_token
 from google.auth.transport import requests
-from .models import Student, Book_Parent
+from .models import Student, Book_Parent, Book_Borrow, LibrarySettings
 from .forms import student_details, BookForm, BookUploadForm
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 import openpyxl
+from datetime import date
 
 @csrf_exempt
 def sign_in(request):
@@ -85,12 +86,46 @@ def student_dashboard(request):
     else:
         print(bits_id, student)
         form = student_details(instance=student)
-
+        
+    borrows = Book_Borrow.objects.filter(student=student)
     # Render the template with the form
     return render(request, 'student_dashboard.html', {'form': form,
         'books': books,
-        'query': query,})
+        'query': query,
+        'borrows': borrows,})
 
+
+def student_book_details(request, pk):
+    book = get_object_or_404(Book_Parent, pk=pk)
+    return render(request, 'student_book_details.html', {'book': book})
+
+
+def borrow_book(request, pk):
+    book = Book_Parent.objects.get(pk=pk)
+    bits_id = request.session['user_data']['email'].split('@')[0]
+    student = Student.objects.get(id=bits_id)
+    if book.available_copies > 0:
+        Book_Borrow.objects.create(student=student, book=book)
+        book.available_copies -= 1
+        book.save()
+        messages.success(request, "Book borrowed successfully!")
+    else:
+        messages.error(request, "No copies of the book are available for borrowing.")
+        
+    return redirect(request.META.get('HTTP_REFERER'))
+
+def return_book(request, borrow_id):
+    borrow = Book_Borrow.objects.get(id=borrow_id)
+    borrow.return_date = date.today()
+    borrow.is_returned = True
+    borrow.save()
+
+    # Update the available copies
+    book = borrow.book
+    book.available_copies += 1
+    book.save()
+
+    return redirect('student_dashboard')
 
 
 def librarian_login(request):
@@ -122,7 +157,7 @@ def librarian_dashboard(request):
         'query': query,
     })
     
-    
+@login_required
 def add_book(request):
     if request.method == 'POST':
         form = BookForm(request.POST, request.FILES)
@@ -134,20 +169,27 @@ def add_book(request):
         form = BookForm()
     return render(request, 'add_book.html', {'form': form})
 
-
+@login_required
 def book_detail(request, pk):
     book = get_object_or_404(Book_Parent, pk=pk)  # Get the book by primary key
+    borrows = Book_Borrow.objects.filter(book=book, is_returned=False)
+    available_copies = book.total_copies - borrows.count()
     if request.method == 'POST':
         form = BookForm(request.POST, request.FILES, instance=book)
         if form.is_valid():
             form.save()
+            book.available_copies = available_copies
+            book.save()
+            print(available_copies, book.available_copies)
             messages.success(request, "Book details updated successfully!")
             return redirect('librarian_dashboard')  # Redirect to the dashboard or another page
     else:
         form = BookForm(instance=book)  # Pre-fill the form with the current book data
-    return render(request, 'book_detail.html', {'form': form, 'book': book})
+    
+    borrows = [borrow for borrow in borrows]
+    return render(request, 'book_detail.html', {'form': form, 'book': book, 'available_copies': available_copies, 'borrows': borrows})
 
-
+@login_required
 def delete_book(request, pk):
     book = get_object_or_404(Book_Parent, pk=pk)
     if request.method == "POST":
@@ -156,7 +198,7 @@ def delete_book(request, pk):
         return redirect('librarian_dashboard')
     return render(request, 'delete_book_confirm.html', {'book': book})
 
-
+@login_required
 def upload_books(request):
     if request.method == "POST":
         form = BookUploadForm(request.POST, request.FILES)
@@ -198,3 +240,20 @@ def upload_books(request):
         form = BookUploadForm()
 
     return render(request, "upload_books.html", {"form": form})
+
+
+@login_required
+def update_library_settings(request):
+    settings = LibrarySettings.objects.first()
+    if settings is None:
+        # Create a default LibrarySettings record if none exist
+        settings = LibrarySettings.objects.create(issue_period=14, late_fee_amount=50)
+    if request.method == 'POST':
+        issue_period = request.POST.get('issue_period')
+        late_fee_amount = request.POST.get('late_fee_amount')
+        settings.issue_period = int(issue_period)
+        settings.late_fee_amount = float(late_fee_amount)
+        settings.save()
+        return redirect('librarian_dashboard')  # Redirect to librarian dashboard
+
+    return render(request, 'update_settings.html', {'settings': settings})

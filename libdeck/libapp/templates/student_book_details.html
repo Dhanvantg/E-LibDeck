@@ -1,0 +1,30 @@
+{% extends 'stud_dash_base.html' %}
+
+{% block content %}
+<div class="mt-5">
+    <div class="card d-flex flex-row">
+      <img src="{{ book.cover_image.url }}" class="card-img" alt="Book Image">
+      <div class="card-body d-flex flex-column justify-content-between">
+        <h5 class="card-title">{{ book.title }}</h5>
+        <p class="card-text"><strong>Author:</strong> {{ book.author }}</p>
+        <p class="card-text"><strong>Publisher:</strong> {{ book.publisher }}</p>
+        <p class="card-text"><strong>Year:</strong> {{ book.publication_year }}</p>
+        <p class="card-text"><strong>ISBN:</strong> {{ book.isbn }}</p>
+        <p class="card-text"><strong>Total Copies:</strong> {{ book.total_copies }}</p>
+        <p class="card-text"><strong>Available Copies:</strong> {{ book.available_copies }}</p>
+        <a href="{% url 'borrow_book' book.pk %}" class="text-center mb-1 btn btn-success">Borrow Book</a>
+        <a href="{% url 'student_dashboard' %}" class="btn btn-primary">Back</a>
+      </div>
+    </div>
+  </div>
+  <center>
+    {% if messages %}
+        <ul>
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+  </center>
+
+{% endblock %}

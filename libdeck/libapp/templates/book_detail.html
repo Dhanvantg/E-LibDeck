@@ -1,18 +1,78 @@
 {% extends 'lib_dash_base.html' %}
 {% block content %}
-<center>
+<style>
+    .header {
+        background-color: #f9f9f9;
+        padding: 10px;
+        cursor: pointer;
+        display: flex;
+    }
+
+    .header .arrow {
+        margin-right: 10px;
+        transition: transform 0.3s ease;
+    }
+
+    .header .arrow.collapsed {
+        transform: rotate(90deg); /* Rotate arrow when expanded */
+    }
+
+    .content {
+        padding: 10px;
+        display: none; /* Hidden by default */
+        background-color: #fff;
+        overflow: auto;
+    }
+</style>
 <div class="container">
     <h2>Edit Book: {{ book.title }}</h2>
 
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
+        <p>Available Copies: {{ available_copies }}</p>
         {{ form.as_p }}
+        
         <button type="submit" class="btn btn-primary">Save Changes</button>
-        <a href="{% url 'librarian_dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
     </form>
+    <br>
+    <h4>Borrowers</h4>
+    {% if borrows %}
+        {% for borrow in borrows %}
+            <div class="header" onclick="toggleCollapse(this)">
+                <span class="arrow">&#9656;</span>
+                <span class="title">{{ borrow.student.name }}</span>
+            </div>
+            <div class="content">
+                <p>Mail: {{ borrow.student.mail }}</p>
+                <p>Hostel: {{ borrow.student.hostel }}</p>
+                <p>Room: {{ borrow.student.room }}</p>
+                <p>Borrow Date: {{ borrow.borrow_date }}</p>
+                <p>Due Date: {{ borrow.due_date }}</p>
+                <p>Late Fee: {{ borrow.late_fee }}</p>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No borrowers at the moment.</p>
+    {% endif %}
+
+    <a href="{% url 'librarian_dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
     <div class="mt-4">
         <a href="{% url 'delete_book' book.pk %}" class="btn btn-danger">Delete Book</a>
     </div>
 </div>
-</center>
+
+<script>
+    function toggleCollapse(headerElement) {
+        const content = headerElement.nextElementSibling; // Get the content div
+        const arrow = headerElement.querySelector(".arrow"); // Get the arrow
+
+        if (content.style.display === "block") {
+            content.style.display = "none"; // Collapse
+            arrow.classList.remove("collapsed"); // Reset arrow rotation
+        } else {
+            content.style.display = "block"; // Expand
+            arrow.classList.add("collapsed"); // Rotate arrow
+        }
+    }
+</script>
 {% endblock %}

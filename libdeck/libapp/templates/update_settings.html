@@ -1,0 +1,21 @@
+{% extends 'lib_dash_base.html' %}
+
+{% block content %}
+<center>
+<div class="container">
+    <h2>Library Settings</h2>
+    <br>
+    <form method="POST">
+        {% csrf_token %}
+        <label for="issue_period">Issue Period (Days):</label>
+        
+        <input type="number" id="issue_period" name="issue_period" value="{{ settings.issue_period }}">
+        <br><br>
+        <label for="late_fee_amount">Late Fee Amount:</label>
+        <input type="number" id="late_fee_amount" name="late_fee_amount" step="0.01" value="{{ settings.late_fee_amount }}">
+        <br><br>
+        <button type="submit" class="btn btn-primary">Save Settings</button>
+    </form>
+</div>
+</center>
+{% endblock %}

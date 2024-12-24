@@ -83,14 +83,15 @@
     <br>
     <a href="{% url 'add_book' %}" class="btn btn-success">Add New Book</a>
     <a href="{% url 'upload_books' %}" class="btn btn-success">Upload Multiple Books</a>
+    <br><br>
+    <a href="{% url 'update_library_settings' %}" class="btn btn-danger">Library Settings</a>
     {% if messages %}
-        <ul>
-            {% for message in messages %}
-                <li>{{ message }}</li>
-            {% endfor %}
-        </ul>
+        {% for message in messages %}
+            {{ message }}
+        {% endfor %}
+    {% endif %}
 </div>
-{% endif %}
+
 </center>
 
 

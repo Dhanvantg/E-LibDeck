@@ -7,7 +7,7 @@
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         {{ form.as_p }}
-        <a href="{% static 'files/example_books.xlsx' %}" class="btn btn-success" download>Download Template</a>
+        <a href="{% static 'example_books.xlsx' %}" class="btn btn-success" download>Download Template</a>
         <br><br>
         <button type="submit" class="btn btn-primary">Upload</button>
         <a href="{% url 'librarian_dashboard' %}" class="btn btn-secondary">Cancel</a>

@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from datetime import timedelta
 
 class Student(models.Model):
     mail = models.CharField(max_length=100, unique=True)
@@ -38,17 +39,37 @@ class Book_Parent(models.Model):
         
     
     
-class Book(models.Model):
-    STATUS_CHOICES = [
-        ('available', 'Available'),
-        ('borrowed', 'Borrowed'),
-    ]
-    parent_book = models.ForeignKey(Book_Parent, on_delete=models.CASCADE, related_name='copies')
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='available')
-    borrower = models.CharField(max_length=100, null=True, blank=True)  # Reference BITS ID
-    due_date = models.DateField(null=True, blank=True)
+class Book_Borrow(models.Model):
+    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    book = models.ForeignKey(Book_Parent, on_delete=models.CASCADE, related_name='copies')
+    borrow_date = models.DateField(auto_now_add=True)
+    return_date = models.DateField(null=True, blank=True)
+    is_returned = models.BooleanField(default=False)
     
+    @property
+    def late_fee(self):
+        # Calculate late fee if the return date is past the due date
+        settings = LibrarySettings.objects.first()
+        if self.borrow_date:
+            due_date = self.borrow_date + timedelta(days=settings.issue_period)
+            if self.borrow_date > due_date:
+                late_days = (self.borrow_date - due_date).days
+                return late_days * settings.late_fee_amount
+        return 0
     
+    @property
+    def due_date(self):
+        # Calculate late fee if the return date is past the due date
+        settings = LibrarySettings.objects.first()
+        d_date = self.borrow_date + timedelta(days=settings.issue_period)
+        return d_date
 
     def __str__(self):
-        return self.title
+        return self.student
+
+
+class LibrarySettings(models.Model):
+    issue_period = models.PositiveIntegerField(default=14)  # Default issue period in days
+    late_fee_amount = models.PositiveIntegerField(default=50) # Late fee amount per day
+    
+    
