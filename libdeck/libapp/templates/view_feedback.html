@@ -1,0 +1,13 @@
+<h1>Feedback</h1>
+<ul>
+    {% for feedback in feedbacks %}
+    <li>
+        <strong>{{ feedback.subject }}</strong><br>
+        {{ feedback.body }}<br>
+        {% if feedback.image %}
+        <img src="{{ feedback.image.url }}" alt="Feedback Image" style="max-width: 200px;">
+        {% endif %}
+        <small>Submitted by: {{ feedback.student.user.username }} at {{ feedback.submitted_at }}</small>
+    </li>
+    {% endfor %}
+</ul>

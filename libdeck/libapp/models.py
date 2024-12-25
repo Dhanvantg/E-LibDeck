@@ -73,3 +73,15 @@ class LibrarySettings(models.Model):
     late_fee_amount = models.PositiveIntegerField(default=50) # Late fee amount per day
     
     
+class Feedback(models.Model):
+    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    subject = models.CharField(max_length=255)
+    body = models.TextField()
+    image = models.ImageField(upload_to="feedback_images/", null=True, blank=True)
+    submitted_at = models.DateTimeField(auto_now_add=True)
+
+class Rating(models.Model):
+    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    parent_book = models.ForeignKey(Book_Parent, on_delete=models.CASCADE, related_name="ratings")
+    rating = models.PositiveIntegerField()
+    rated_at = models.DateTimeField(auto_now_add=True)

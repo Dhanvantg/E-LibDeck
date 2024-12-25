@@ -29,6 +29,7 @@
 
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
+        <p><strong>Book Rated {{ avg_rating }}⭐ by {{ total_ratings }} people.</strong></p>
         <p>Available Copies: {{ available_copies }}</p>
         {{ form.as_p }}
         

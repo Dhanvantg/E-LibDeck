@@ -19,6 +19,8 @@ urlpatterns = [
     path('borrow/<int:pk>/', views.borrow_book, name='borrow_book'),
     path('return/<int:borrow_id>/', views.return_book, name='return_book'),
     path('settings/', views.update_library_settings, name='update_library_settings'),
+    path('submit-feedback/', views.submit_feedback, name='submit_feedback'),
+    path('rate-book/<int:pk>/', views.submit_rating, name='submit_rating'),
 ]
 
 if settings.DEBUG:  # Serve media files during development

@@ -1,5 +1,5 @@
 from django import forms
-from .models import Book_Parent, Student
+from .models import Book_Parent, Student, Feedback, Rating
 
 class student_details(forms.ModelForm):
     choices = [
@@ -34,3 +34,13 @@ class BookUploadForm(forms.Form):
     excel_file = forms.FileField(label="Upload Excel File")
     
     
+class FeedbackForm(forms.ModelForm):
+    class Meta:
+        model = Feedback
+        fields = ['subject', 'body', 'image']
+        
+        
+class RatingForm(forms.ModelForm):
+    class Meta:
+        model = Rating
+        fields = ['rating']

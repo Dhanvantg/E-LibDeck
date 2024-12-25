@@ -39,6 +39,41 @@
         filter: blur(5px);
         pointer-events: none;
     }
+    .header {
+        background-color: #f9f9f9;
+        padding: 10px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+    }
+
+    .header .arrow {
+        margin-right: 10px;
+        transition: transform 0.3s ease;
+    }
+
+    .header .arrow.collapsed {
+        transform: rotate(90deg); /* Rotate arrow when expanded */
+    }
+
+    .content {
+        padding: 10px;
+        display: none; /* Hidden by default */
+        background-color: #fff;
+        overflow: auto;
+    }
+
+    .subcontent {
+        font-size: 0.8em;
+        color: gray;
+        text-align: left;
+        margin-bottom: 5px;
+    }
+
+    .feedback {
+        text-align: left;
+        margin-bottom: 5px;
+    }
 </style>
 <center>
 
@@ -68,7 +103,7 @@
         </div>
     </form>
     {% for book in books %}
-        <a href="{% url 'book_detail' book.pk %}" class="btn btn-info">
+        <a href="{% url 'book_detail' book.pk %}" class="btn">
             <div class="text-center mb-1">
                 {% if book.cover_image %}
                     <img src="{{ book.cover_image.url }}" alt="{{ book.title }}" style="max-width: 150px;" class="img-thumbnail">
@@ -79,7 +114,40 @@
             </div>
         </a>
     {% endfor %}
+
 </div>
+<br>
+
+<div class="header" onclick="toggleCollapse(this)">
+    <span class="arrow">&#9656;</span>
+    <span class="title">View Feedback</span>
+</div>
+<div class="content">
+    {% if feedbacks %}
+        {% for feedback in feedbacks %}
+            <div class="header" onclick="toggleCollapse(this)">
+                <span class="arrow">&#9656;</span>
+                <span class="title">{{ feedback.subject }}</span>
+            </div>
+            <div class="content">
+                <div class="feedback">
+                    <p>{{ feedback.body }}</p>
+                    {% if feedback.image %}
+                        <img src="{{ feedback.image.url }}" style="max-width: 150px;"></img>
+                    {% endif %}
+                </div>
+                <div class="subcontent">
+                    <p>Dated: {{ feedback.submitted_at }}</p>
+                    <p>By: {{ feedback.student }}</p>
+                    <p>Mail: {{ feedback.student.mail }}</p>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No borrowers at the moment.</p>
+    {% endif %}
+</div>
+
     <br>
     <a href="{% url 'add_book' %}" class="btn btn-success">Add New Book</a>
     <a href="{% url 'upload_books' %}" class="btn btn-success">Upload Multiple Books</a>
@@ -121,6 +189,19 @@
             }
         });
     });
+
+    function toggleCollapse(headerElement) {
+        const content = headerElement.nextElementSibling; // Get the content div
+        const arrow = headerElement.querySelector(".arrow"); // Get the arrow
+
+        if (content.style.display === "block") {
+            content.style.display = "none"; // Collapse
+            arrow.classList.remove("collapsed"); // Reset arrow rotation
+        } else {
+            content.style.display = "block"; // Expand
+            arrow.classList.add("collapsed"); // Rotate arrow
+        }
+    }
 </script>
 
 {% endblock %}

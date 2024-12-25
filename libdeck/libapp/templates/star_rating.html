@@ -1,0 +1,47 @@
+{% if eligible %}
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+    }
+    .form-container {
+        margin: auto;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        text-align: center;
+    }
+    .slider-container {
+        margin: 20px 0;
+    }
+    .slider-value {
+        font-weight: bold;
+        color: #333;
+    }
+</style>
+<div class="form-container">
+    <h4>Rate the Book</h4>
+    <form method="POST" action="{% url 'submit_rating' book.pk %}">
+        <!-- CSRF token for Django -->
+        {% csrf_token %}
+        
+        <label for="rating">Select a rating:</label>
+        <div class="slider-container">
+            <input type="range" id="rating" name="rating" min="1" max="5" value="3" step="1" oninput="updateSliderValue(this.value)">
+            <p>Selected Rating: <span id="slider-value" class="slider-value">3</span></p>
+        </div>
+        <button type="submit" class="btn btn-success">Submit</button>
+    </form>
+</div>
+<br>
+
+<script>
+    function updateSliderValue(value) {
+        document.getElementById('slider-value').textContent = value;
+    }
+</script>
+
+    
+{% endif %}

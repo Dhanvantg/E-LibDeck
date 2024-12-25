@@ -1,0 +1,14 @@
+{% extends 'lib_dash_base.html' %}
+
+{% block content %}
+
+<div class="container">
+    <h1>Submit Feedback</h1>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Submit Feedback</button>
+    </form>
+</div>
+
+{% endblock %}

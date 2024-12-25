@@ -3,10 +3,11 @@ import os
 from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Avg
 from google.oauth2 import id_token
 from google.auth.transport import requests
-from .models import Student, Book_Parent, Book_Borrow, LibrarySettings
-from .forms import student_details, BookForm, BookUploadForm
+from .models import Student, Book_Parent, Book_Borrow, LibrarySettings, Feedback, Rating
+from .forms import student_details, BookForm, BookUploadForm, FeedbackForm, RatingForm
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -97,7 +98,25 @@ def student_dashboard(request):
 
 def student_book_details(request, pk):
     book = get_object_or_404(Book_Parent, pk=pk)
-    return render(request, 'student_book_details.html', {'book': book})
+    ratings = book.ratings.all()
+    bits_id = request.session['user_data']['email'].split('@')[0]
+    student = Student.objects.get(id=bits_id)
+    has_rated = Rating.objects.filter(student=student, parent_book=book).exists()
+    avg_rating = ratings.aggregate(Avg('rating'))['rating__avg'] or 0
+    total_ratings = ratings.count()
+    default_rating = None
+    eligible = False
+
+    if Book_Borrow.objects.filter(student=student, book=book).count() > 0: 
+        eligible = True
+        print('yes')
+    else:
+        print('no')
+        eligible = False
+    if has_rated:
+        default_rating = Rating.objects.get(student=student, parent_book=book).rating
+        
+    return render(request, 'student_book_details.html', {'book': book, 'avg_rating': avg_rating, 'total_ratings': total_ratings, 'has_rated': has_rated, "default_rating": default_rating, 'eligible': eligible})
 
 
 def borrow_book(request, pk):
@@ -144,10 +163,51 @@ def librarian_login(request):
     return render(request, 'librarian_login.html')
 
 
+def submit_rating(request, pk):
+    book = Book_Parent.objects.get(pk=pk)
+    bits_id = request.session['user_data']['email'].split('@')[0]
+    student = Student.objects.get(id=bits_id)
+    if Rating.objects.filter(student=student, parent_book=book).exists():
+        messages.error(request, "You have already rated this book.")
+        return redirect("book_details", pk=book.pk)
+    
+    if request.method == "POST":
+        rating_value = request.POST.get("rating")
+        if rating_value:
+            Rating.objects.create(
+                student=student,
+                parent_book=book,
+                rating=int(rating_value)
+            )
+            messages.success(request, "Thank you for your rating!")
+            return redirect("book_details", pk=book.pk)
+        else:
+            messages.error(request, "Please select a rating before submitting.")
+            return redirect("book_details", book_id=book.pk)
+    return render(request, "submit_rating.html", {"book": book})
+
+
+def submit_feedback(request):
+    if request.method == "POST":
+        form = FeedbackForm(request.POST, request.FILES)
+        if form.is_valid():
+            feedback = form.save(commit=False)
+            bits_id = request.session['user_data']['email'].split('@')[0]
+            feedback.student = Student.objects.get(id=bits_id)
+            feedback.save()
+            messages.success(request, "Feedback submitted successfully!")
+            return redirect("student_dashboard")
+    else:
+        form = FeedbackForm()
+    return render(request, "submit_feedback.html", {"form": form})
+
+
 @login_required
 def librarian_dashboard(request):
     books = Book_Parent.objects.all()  # Fetch all books
     query = request.GET.get('q')  # Get the search query from the request
+    feedbacks = Feedback.objects.all().order_by("-submitted_at")
+    print(feedbacks)
     if query:
         books = Book_Parent.objects.filter(title__icontains=query)  # Filter books by title
     return render(request, 'librarian_dashboard.html', {
@@ -155,6 +215,7 @@ def librarian_dashboard(request):
         'psrn': request.user.psrn,
         'books': books,
         'query': query,
+        'feedbacks': feedbacks,
     })
     
 @login_required
@@ -174,6 +235,10 @@ def book_detail(request, pk):
     book = get_object_or_404(Book_Parent, pk=pk)  # Get the book by primary key
     borrows = Book_Borrow.objects.filter(book=book, is_returned=False)
     available_copies = book.total_copies - borrows.count()
+    ratings = book.ratings.all()
+    avg_rating = ratings.aggregate(Avg('rating'))['rating__avg'] or 0
+    total_ratings = ratings.count()
+    
     if request.method == 'POST':
         form = BookForm(request.POST, request.FILES, instance=book)
         if form.is_valid():
@@ -187,7 +252,7 @@ def book_detail(request, pk):
         form = BookForm(instance=book)  # Pre-fill the form with the current book data
     
     borrows = [borrow for borrow in borrows]
-    return render(request, 'book_detail.html', {'form': form, 'book': book, 'available_copies': available_copies, 'borrows': borrows})
+    return render(request, 'book_detail.html', {'form': form, 'book': book, 'available_copies': available_copies, 'borrows': borrows, 'avg_rating': avg_rating, 'total_ratings': total_ratings})
 
 @login_required
 def delete_book(request, pk):
@@ -257,3 +322,4 @@ def update_library_settings(request):
         return redirect('librarian_dashboard')  # Redirect to librarian dashboard
 
     return render(request, 'update_settings.html', {'settings': settings})
+

@@ -1,0 +1,7 @@
+{% if not has_rated and eligible %}
+    <div id="rating-container">
+        {% include "star_rating.html" %}
+    </div>
+{% else %}
+    <p>You have already rated this book with {{ default_rating }} stars.</p>
+{% endif %}
