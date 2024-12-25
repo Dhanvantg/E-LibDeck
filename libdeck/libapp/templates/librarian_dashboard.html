@@ -74,6 +74,28 @@
         text-align: left;
         margin-bottom: 5px;
     }
+
+    .pagination {
+        display: flex; /* Use flexbox for alignment */
+        justify-content: center; /* Center align content horizontally */
+        align-items: center; /* Align content vertically */
+        margin-top: 20px;
+    }
+
+    .pagination .step-links a {
+        margin: 0 5px;
+        text-decoration: none;
+        padding: 5px 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        background-color: #f4f4f4;
+    }
+
+    .pagination .current {
+        margin: 0 10px;
+        font-weight: bold;
+        padding: 5px 10px;
+    }
 </style>
 <center>
 
@@ -102,7 +124,7 @@
             <button type="submit" class="btn btn-primary">Search</button>
         </div>
     </form>
-    {% for book in books %}
+    {% for book in page_obj %}
         <a href="{% url 'book_detail' book.pk %}" class="btn">
             <div class="text-center mb-1">
                 {% if book.cover_image %}
@@ -114,6 +136,24 @@
             </div>
         </a>
     {% endfor %}
+
+    <div class="pagination">
+        <span class="step-links">
+            {% if page_obj.has_previous %}
+                <a href="?page=1">First</a>
+                <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+            {% endif %}
+
+            <span class="current">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </span>
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}">Next</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}">Last</a>
+            {% endif %}
+        </span>
+    </div>
 
 </div>
 <br>

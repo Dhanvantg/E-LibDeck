@@ -1,16 +1,19 @@
 import os
 
-from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Avg
-from google.oauth2 import id_token
-from google.auth.transport import requests
-from .models import Student, Book_Parent, Book_Borrow, LibrarySettings, Feedback, Rating
-from .forms import student_details, BookForm, BookUploadForm, FeedbackForm, RatingForm
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+
+from google.oauth2 import id_token
+from google.auth.transport import requests
+
+from .models import Student, Book_Parent, Book_Borrow, LibrarySettings, Feedback, Rating
+from .forms import student_details, BookForm, BookUploadForm, FeedbackForm
+
 import openpyxl
 from datetime import date
 
@@ -88,10 +91,14 @@ def student_dashboard(request):
         print(bits_id, student)
         form = student_details(instance=student)
         
+    paginator = Paginator(books, 6)
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+    
     borrows = Book_Borrow.objects.filter(student=student)
     # Render the template with the form
     return render(request, 'student_dashboard.html', {'form': form,
-        'books': books,
+        'page_obj': page_obj,
         'query': query,
         'borrows': borrows,})
 
@@ -210,10 +217,16 @@ def librarian_dashboard(request):
     print(feedbacks)
     if query:
         books = Book_Parent.objects.filter(title__icontains=query)  # Filter books by title
+        
+    paginator = Paginator(books, 2)
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+    
     return render(request, 'librarian_dashboard.html', {
         'username': request.user.username,
         'psrn': request.user.psrn,
         'books': books,
+        'page_obj': page_obj,
         'query': query,
         'feedbacks': feedbacks,
     })

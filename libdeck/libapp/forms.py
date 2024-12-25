@@ -1,5 +1,5 @@
 from django import forms
-from .models import Book_Parent, Student, Feedback, Rating
+from .models import Book_Parent, Student, Feedback
 
 class student_details(forms.ModelForm):
     choices = [
@@ -38,9 +38,3 @@ class FeedbackForm(forms.ModelForm):
     class Meta:
         model = Feedback
         fields = ['subject', 'body', 'image']
-        
-        
-class RatingForm(forms.ModelForm):
-    class Meta:
-        model = Rating
-        fields = ['rating']
