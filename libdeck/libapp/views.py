@@ -3,9 +3,10 @@ import os
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Avg
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from .decorators import student_login
 from django.core.paginator import Paginator
 
 from google.oauth2 import id_token
@@ -23,7 +24,13 @@ def sign_in(request):
         if request.session['user_data']:
             return redirect('student_dashboard')
     except:
-        return render(request, 'sign_in.html')
+        try:
+            if request.user.is_authenticated:
+                return redirect('librarian_dashboard')
+            else:
+                return render(request, 'sign_in.html')
+        except:
+            return render(request, 'sign_in.html')
 
 
 @csrf_exempt
@@ -63,11 +70,13 @@ def auth_receiver(request):
         return redirect('sign_in')
 
 
+@student_login
 def sign_out(request):
     del request.session['user_data']
     return redirect('sign_in')
 
 
+@student_login
 def student_dashboard(request):
     bits_id = request.session['user_data']['email'].split('@')[0]
     student = Student.objects.get(id=bits_id)
@@ -101,6 +110,7 @@ def student_dashboard(request):
         'borrows': borrows,})
 
 
+@student_login
 def student_book_details(request, pk):
     book = get_object_or_404(Book_Parent, pk=pk)
     ratings = book.ratings.all()
@@ -127,6 +137,7 @@ def student_book_details(request, pk):
         'eligible': eligible})
 
 
+@student_login
 def borrow_book(request, pk):
     book = Book_Parent.objects.get(pk=pk)
     bits_id = request.session['user_data']['email'].split('@')[0]
@@ -139,6 +150,8 @@ def borrow_book(request, pk):
         
     return redirect(request.META.get('HTTP_REFERER'))
 
+
+@student_login
 def return_book(request, borrow_id):
     borrow = Book_Borrow.objects.get(id=borrow_id)
     late_fee = borrow.late_fee
@@ -174,6 +187,7 @@ def librarian_login(request):
     return render(request, 'librarian_login.html')
 
 
+@student_login
 def submit_rating(request, pk):
     book = Book_Parent.objects.get(pk=pk)
     bits_id = request.session['user_data']['email'].split('@')[0]
@@ -198,6 +212,7 @@ def submit_rating(request, pk):
     return render(request, "submit_rating.html", {"book": book})
 
 
+@student_login
 def submit_feedback(request):
     if request.method == "POST":
         form = FeedbackForm(request.POST, request.FILES)
@@ -342,3 +357,8 @@ def update_library_settings(request):
 
     return render(request, 'update_settings.html', {'settings': settings})
 
+
+@login_required
+def librarian_sign_out(request):
+    logout(request)
+    return redirect('sign_in')

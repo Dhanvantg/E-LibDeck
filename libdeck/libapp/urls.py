@@ -21,6 +21,7 @@ urlpatterns = [
     path('settings/', views.update_library_settings, name='update_library_settings'),
     path('submit-feedback/', views.submit_feedback, name='submit_feedback'),
     path('rate-book/<int:pk>/', views.submit_rating, name='submit_rating'),
+    path('librarian-sign-out', views.librarian_sign_out, name='librarian_sign_out'),
 ]
 
 if settings.DEBUG:  # Serve media files during development
