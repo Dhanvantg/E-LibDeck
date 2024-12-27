@@ -17,7 +17,7 @@ from .forms import student_details, BookForm, BookUploadForm, FeedbackForm
 import openpyxl
 from datetime import date
 
-@csrf_exempt
+
 def sign_in(request):
     try:
         if request.session['user_data']:
@@ -31,7 +31,7 @@ def auth_receiver(request):
     """
     Google calls this URL after the user has signed in with their Google account.
     """
-    print('Inside')
+
     try:
         token = request.POST['credential']
     except:
@@ -41,26 +41,25 @@ def auth_receiver(request):
         user_data = id_token.verify_oauth2_token(
             token, requests.Request(), os.environ['GOOGLE_OAUTH_CLIENT_ID'], clock_skew_in_seconds=15
         )
-        print(user_data)
+
         if user_data['email'].endswith('bits-pilani.ac.in'):
             request.session['user_data'] = user_data
             bits_id = user_data['email'].split('@')[0]
             
             if Student.objects.filter(id=bits_id).exists():
-                print('checking')
+
                 if Student.objects.get(id=bits_id).hostel == 'empty':
                     return redirect('student_dashboard')
             else:
-                print('creating')
+
                 Student.objects.create(mail = user_data['email'], id = bits_id, name = user_data['name'])
             return redirect('student_dashboard')
 
         else:
-            print('yes')
+
             return render(request, 'invalid_mail.html')
             
     except Exception as e:
-        print(e)
         return redirect('sign_in')
 
 
@@ -80,7 +79,6 @@ def student_dashboard(request):
         form = student_details(request.POST, instance=student)  # Bind data from POST request to the form
         if form.is_valid():
             # Access cleaned data
-            print('here')
             hostel = form.cleaned_data['hostel']
             room = form.cleaned_data['room']
             student.hostel = hostel
@@ -88,7 +86,6 @@ def student_dashboard(request):
             student.save()
             
     else:
-        print(bits_id, student)
         form = student_details(instance=student)
         
     paginator = Paginator(books, 6)
@@ -98,6 +95,7 @@ def student_dashboard(request):
     borrows = Book_Borrow.objects.filter(student=student)
     # Render the template with the form
     return render(request, 'student_dashboard.html', {'form': form,
+        'student': student,
         'page_obj': page_obj,
         'query': query,
         'borrows': borrows,})
@@ -116,14 +114,17 @@ def student_book_details(request, pk):
 
     if Book_Borrow.objects.filter(student=student, book=book).count() > 0: 
         eligible = True
-        print('yes')
     else:
-        print('no')
         eligible = False
     if has_rated:
         default_rating = Rating.objects.get(student=student, parent_book=book).rating
         
-    return render(request, 'student_book_details.html', {'book': book, 'avg_rating': avg_rating, 'total_ratings': total_ratings, 'has_rated': has_rated, "default_rating": default_rating, 'eligible': eligible})
+    return render(request, 'student_book_details.html', {'book': book, 
+        'avg_rating': avg_rating, 
+        'total_ratings': total_ratings, 
+        'has_rated': has_rated, 
+        "default_rating": default_rating, 
+        'eligible': eligible})
 
 
 def borrow_book(request, pk):
@@ -132,8 +133,6 @@ def borrow_book(request, pk):
     student = Student.objects.get(id=bits_id)
     if book.available_copies > 0:
         Book_Borrow.objects.create(student=student, book=book)
-        book.available_copies -= 1
-        book.save()
         messages.success(request, "Book borrowed successfully!")
     else:
         messages.error(request, "No copies of the book are available for borrowing.")
@@ -142,14 +141,19 @@ def borrow_book(request, pk):
 
 def return_book(request, borrow_id):
     borrow = Book_Borrow.objects.get(id=borrow_id)
+    late_fee = borrow.late_fee
     borrow.return_date = date.today()
     borrow.is_returned = True
+    borrow.penalty = late_fee
     borrow.save()
 
     # Update the available copies
     book = borrow.book
     book.available_copies += 1
     book.save()
+    
+    borrow.student.dues += late_fee
+    borrow.student.save()
 
     return redirect('student_dashboard')
 
@@ -214,7 +218,7 @@ def librarian_dashboard(request):
     books = Book_Parent.objects.all()  # Fetch all books
     query = request.GET.get('q')  # Get the search query from the request
     feedbacks = Feedback.objects.all().order_by("-submitted_at")
-    print(feedbacks)
+
     if query:
         books = Book_Parent.objects.filter(title__icontains=query)  # Filter books by title
         
@@ -258,7 +262,7 @@ def book_detail(request, pk):
             form.save()
             book.available_copies = available_copies
             book.save()
-            print(available_copies, book.available_copies)
+            
             messages.success(request, "Book details updated successfully!")
             return redirect('librarian_dashboard')  # Redirect to the dashboard or another page
     else:
@@ -325,12 +329,14 @@ def update_library_settings(request):
     settings = LibrarySettings.objects.first()
     if settings is None:
         # Create a default LibrarySettings record if none exist
-        settings = LibrarySettings.objects.create(issue_period=14, late_fee_amount=50)
+        settings = LibrarySettings.objects.create(issue_period=14, late_fee_amount=50, fee_compound=5)
     if request.method == 'POST':
         issue_period = request.POST.get('issue_period')
         late_fee_amount = request.POST.get('late_fee_amount')
+        fee_compound = request.POST.get('fee_compound')
         settings.issue_period = int(issue_period)
         settings.late_fee_amount = float(late_fee_amount)
+        settings.fee_compound = float(fee_compound)
         settings.save()
         return redirect('librarian_dashboard')  # Redirect to librarian dashboard
 

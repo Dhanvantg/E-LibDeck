@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from datetime import timedelta
+from datetime import timedelta, date
 
 class Student(models.Model):
     mail = models.CharField(max_length=100, unique=True)
@@ -8,6 +8,7 @@ class Student(models.Model):
     name = models.CharField(max_length=100)
     hostel = models.CharField(max_length=10, default='empty')
     room = models.IntegerField(default=0)
+    dues = models.IntegerField(default=0)
 
     def __str__(self):
         return self.name
@@ -45,16 +46,18 @@ class Book_Borrow(models.Model):
     borrow_date = models.DateField(auto_now_add=True)
     return_date = models.DateField(null=True, blank=True)
     is_returned = models.BooleanField(default=False)
+    penalty = models.IntegerField(default=0)
     
     @property
     def late_fee(self):
         # Calculate late fee if the return date is past the due date
         settings = LibrarySettings.objects.first()
-        if self.borrow_date:
+        if self.borrow_date and not self.is_returned:
             due_date = self.borrow_date + timedelta(days=settings.issue_period)
-            if self.borrow_date > due_date:
-                late_days = (self.borrow_date - due_date).days
-                return late_days * settings.late_fee_amount
+            if date.today() > self.due_date:
+                late_days = (date.today()-self.due_date).days
+                late_fees = settings.late_fee_amount * ((1 + settings.fee_compound / 100) ** late_days) # Formula for compounding fees
+                return int(late_fees)
         return 0
     
     @property
@@ -71,6 +74,7 @@ class Book_Borrow(models.Model):
 class LibrarySettings(models.Model):
     issue_period = models.PositiveIntegerField(default=14)  # Default issue period in days
     late_fee_amount = models.PositiveIntegerField(default=50) # Late fee amount per day
+    fee_compound = models.PositiveIntegerField(default=5) # Rate at which fees compound every day
     
     
 class Feedback(models.Model):

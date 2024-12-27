@@ -229,7 +229,7 @@
                         <div class="content">
                             <p>Borrow Date: {{ borrow.borrow_date }}</p>
                             <p>Return Date: {{ borrow.return_date }}</p>
-                            <p>Late Fee: {{ borrow.late_fee }}</p>
+                            <p>Late Fee: {{ borrow.penalty }}</p>
                         </div>
                     </div>
                 
@@ -254,7 +254,7 @@
     <div class="profile-modal-content">
         <p>Hi {{ request.session.user_data.given_name }} 🙂</p>
         <p>Email: {{ request.session.user_data.email }}</p>
-        
+        <p>Your dues: ₹{{ student.dues }}</p>
         <img src="{{ request.session.user_data.picture }}" alt="User picture">
         <p>Kindly update your Details</p>
         <form method="post">

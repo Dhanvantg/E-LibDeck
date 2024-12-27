@@ -6,4 +6,4 @@ class LibappConfig(AppConfig):
     name = 'libapp'
 
     def ready(self):
-        pass
+        import libapp.signals
