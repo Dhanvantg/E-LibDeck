@@ -17,6 +17,8 @@ from .forms import student_details, BookForm, BookUploadForm, FeedbackForm
 
 import openpyxl
 from datetime import date
+from rapidfuzz import fuzz
+from rapidfuzz import process
 
 
 def sign_in(request):
@@ -82,8 +84,18 @@ def student_dashboard(request):
     student = Student.objects.get(id=bits_id)
     books = Book_Parent.objects.all()  # Fetch all books
     query = request.GET.get('q')  # Get the search query from the request
+    fuzzy_enabled = 'fuzzy' in request.GET
+    number_display = request.GET.get('nums')
     if query:
-        books = Book_Parent.objects.filter(title__icontains=query)
+        if fuzzy_enabled:
+            titles = []
+            for book in books:
+                titles.append(book.title)
+            matches = process.extract(query, titles, scorer=fuzz.ratio, limit=int(number_display))
+            matched_titles = [match[0] for match in matches]
+            books = [book for book in books if book.title in matched_titles]
+        else:
+            books = Book_Parent.objects.filter(title__icontains=query)
     if request.method == 'POST':
         form = student_details(request.POST, instance=student)  # Bind data from POST request to the form
         if form.is_valid():

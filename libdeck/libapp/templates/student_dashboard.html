@@ -154,8 +154,20 @@
         <form method="get" class="mb-4">
             <div class="input-group">
                 <input type="text" name="q" class="form-control" placeholder="Search books by title" value="{{ query|default:'' }}">
+                
                 <button type="submit" class="btn btn-primary">Search</button>
+            
             </div>
+            <label>
+                <input type="checkbox" name="fuzzy" id="fuzzy" {% if fuzzy_enabled %}checked{% endif %}>
+                Fuzzy Search
+                <div id="num-display">
+                    
+                    Number of Books to display:
+                    <br>
+                    <input type="text" name="nums" class="nums" value=6>
+                </div>
+            </label>
         </form>
         {% for book in page_obj %}
                 <a href="{% url 'book_details' book.pk %}" class="text-center mb-1 btn">
@@ -284,7 +296,9 @@
         const profileIcon = document.getElementById("profileIcon");
         const profileModal = document.getElementById("profileModal");
         const mainContent = document.querySelector(".main-content");
-    
+        const checkbox = document.getElementById("fuzzy");
+        const content = document.getElementById("num-display");
+
         profileIcon.addEventListener("click", function () {
             if (profileModal.style.display === "block") {
             // If modal is open, close it
@@ -304,6 +318,18 @@
                 mainContent.classList.remove("blurred");
             }
         });
+
+        function toggleFuzzyContent() {
+            if (checkbox.checked) {
+                content.style.display = 'block';
+            } else {
+                content.style.display = 'none';
+            }
+        }
+
+        toggleFuzzyContent();
+
+        checkbox.addEventListener('change', toggleFuzzyContent);
     });
 
     function toggleCollapse(headerElement) {
