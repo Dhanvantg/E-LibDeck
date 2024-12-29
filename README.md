@@ -1,4 +1,3 @@
-<div class="#readme-top"></div>
 <br />
 <div align="center">
   <h3 align="center">E - LibDeck</h3>
@@ -42,7 +41,4 @@ To get the project running, follow these steps:
 To create a Librarian account:
 * `python manage.py createsuperuser` and enter the credentials that follow
 * use the username and password as login on the admin page
-  
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
