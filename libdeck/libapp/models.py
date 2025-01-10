@@ -60,6 +60,8 @@ class Book_Borrow(models.Model):
                 return int(late_fees)
         return 0
     
+    
+    
     @property
     def due_date(self):
         # Calculate late fee if the return date is past the due date
@@ -68,7 +70,7 @@ class Book_Borrow(models.Model):
         return d_date
 
     def __str__(self):
-        return self.student
+        return self.book.title + '-' + str(self.return_date)
 
 
 class LibrarySettings(models.Model):
