@@ -12,7 +12,7 @@ from django.core.paginator import Paginator
 from google.oauth2 import id_token
 from google.auth.transport import requests
 
-from .models import Student, Book_Parent, Book_Borrow, LibrarySettings, Feedback, Rating
+from .models import Student, Librarian, Book_Parent, Book_Borrow, LibrarySettings, Feedback, Rating
 from .forms import student_details, BookForm, BookUploadForm, FeedbackForm
 
 import openpyxl
@@ -216,6 +216,10 @@ def librarian_login(request):
 
         # Authenticate user
         user = authenticate(request, username=username, password=password)
+        try:
+            Librarian.objects.get(user=user).psrn
+        except:
+            user=None
         if user is not None:
             login(request, user)  # Log in the user
             return redirect('librarian_dashboard')  # Redirect to the dashboard
@@ -281,7 +285,7 @@ def librarian_dashboard(request):
     
     return render(request, 'librarian_dashboard.html', {
         'username': request.user.username,
-        'psrn': request.user.psrn,
+        'psrn': Librarian.objects.get(user = request.user).psrn,
         'books': books,
         'page_obj': page_obj,
         'query': query,

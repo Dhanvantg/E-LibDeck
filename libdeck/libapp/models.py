@@ -1,14 +1,14 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import User
 from datetime import timedelta, date
     
 
-class Librarian(AbstractUser):
-    psrn = models.CharField(max_length=20, null=True, blank=True, unique=True)
-    name = models.CharField(max_length=100)
-    REQUIRED_FIELDS = ["psrn"]
+class Librarian(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='librarian_profile')
+    psrn = models.CharField(max_length=20, unique=True)
+    
     def __str__(self):
-        return f"{self.name} ({self.psrn})"
+        return f"{self.psrn}"
 
 
 class Book_Parent(models.Model):

@@ -1,3 +1,7 @@
 from django.contrib import admin
+from .models import Librarian
 
-# Register your models here.
+@admin.register(Librarian)
+class LibrarianAdmin(admin.ModelAdmin):
+    list_display = ('user', 'psrn')
+    search_fields = ('user__username', 'psrn')
