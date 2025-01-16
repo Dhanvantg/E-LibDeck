@@ -1,17 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from datetime import timedelta, date
-
-class Student(models.Model):
-    mail = models.CharField(max_length=100, unique=True)
-    id = models.CharField(max_length=100, unique=True, primary_key=True)
-    name = models.CharField(max_length=100)
-    hostel = models.CharField(max_length=10, default='empty')
-    room = models.IntegerField(default=0)
-    dues = models.IntegerField(default=0)
-
-    def __str__(self):
-        return self.name
     
 
 class Librarian(AbstractUser):
@@ -38,7 +27,19 @@ class Book_Parent(models.Model):
             self.available_copies = self.total_copies
         super().save(*args, **kwargs)
         
-    
+
+class Student(models.Model):
+    mail = models.CharField(max_length=100, unique=True)
+    id = models.CharField(max_length=100, unique=True, primary_key=True)
+    name = models.CharField(max_length=100)
+    hostel = models.CharField(max_length=10, default='empty')
+    room = models.IntegerField(default=0)
+    dues = models.IntegerField(default=0)
+    favourites = models.ManyToManyField(Book_Parent, related_name='favourited_by', blank=True)
+
+    def __str__(self):
+        return self.name
+
     
 class Book_Borrow(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE)

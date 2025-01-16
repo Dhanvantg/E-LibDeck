@@ -21,8 +21,19 @@
                 {% include "star_rating.html" %}
             </div>
         {% endif %}
-
-
+        <center>
+        <form action="{% url 'toggle_favourite' book.id %}" method="post">
+          {% csrf_token %}
+          <button type="submit" class="favorite-btn">
+            {% if is_favourite %}
+              Remove from Favourites
+            {% else %}
+              Add to Favourites
+            {% endif %}
+          </button>
+        </form>  
+        </center>
+        <br>
         <a href="{% url 'borrow_book' book.pk %}" class="text-center mb-1 btn btn-success">Borrow Book</a>
         <a href="{% url 'student_dashboard' %}" class="btn btn-primary">Back</a>
       </div>

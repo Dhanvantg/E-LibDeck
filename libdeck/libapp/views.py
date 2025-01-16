@@ -85,17 +85,27 @@ def student_dashboard(request):
     books = Book_Parent.objects.all()  # Fetch all books
     query = request.GET.get('q')  # Get the search query from the request
     fuzzy_enabled = 'fuzzy' in request.GET
+    favourite = 'favourites' in request.GET
     number_display = request.GET.get('nums')
-    if query:
+    print(favourite)
+    if query or favourite:
         if fuzzy_enabled:
             titles = []
-            for book in books:
-                titles.append(book.title)
+            if favourite:
+                for book in student.favourites.all():
+                    titles.append(book.title)
+            else:
+                for book in books:
+                    titles.append(book.title)
             matches = process.extract(query, titles, scorer=fuzz.ratio, limit=int(number_display))
             matched_titles = [match[0] for match in matches]
             books = [book for book in books if book.title in matched_titles]
         else:
-            books = Book_Parent.objects.filter(title__icontains=query)
+            if favourite:
+                print('is happening')
+                books = [book for book in student.favourites.all()]
+            else:
+                books = Book_Parent.objects.filter(title__icontains=query)
     if request.method == 'POST':
         form = student_details(request.POST, instance=student)  # Bind data from POST request to the form
         if form.is_valid():
@@ -133,6 +143,7 @@ def student_book_details(request, pk):
     total_ratings = ratings.count()
     default_rating = None
     eligible = False
+    is_favourite = book in student.favourites.all()
 
     if Book_Borrow.objects.filter(student=student, book=book).count() > 0: 
         eligible = True
@@ -146,7 +157,22 @@ def student_book_details(request, pk):
         'total_ratings': total_ratings, 
         'has_rated': has_rated, 
         "default_rating": default_rating, 
-        'eligible': eligible})
+        'eligible': eligible,
+        'is_favourite': is_favourite,})
+    
+
+@student_login
+def toggle_favourite(request, pk):
+    book = get_object_or_404(Book_Parent, pk=pk)
+    bits_id = request.session['user_data']['email'].split('@')[0]
+    student = Student.objects.get(id=bits_id)
+
+    if book in student.favourites.all():
+        student.favourites.remove(book)
+    else:
+        student.favourites.add(book)
+
+    return redirect('book_details', pk=book.pk)
 
 
 @student_login
